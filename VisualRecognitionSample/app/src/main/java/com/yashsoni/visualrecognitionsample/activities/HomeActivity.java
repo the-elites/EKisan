@@ -1,7 +1,13 @@
 package com.yashsoni.visualrecognitionsample.activities;
 
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -17,6 +23,10 @@ import com.ibm.watson.developer_cloud.visual_recognition.v3.model.ClassifyOption
 import com.yashsoni.visualrecognitionsample.R;
 import com.yashsoni.visualrecognitionsample.models.VisualRecognitionResponseModel;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,14 +41,16 @@ import io.reactivex.schedulers.Schedulers;
 public class HomeActivity extends AppCompatActivity {
 
     // IBM WATSON VISUAL RECOGNITION RELATED
-    private final String API_KEY = "<YOUR-API-KEY-HERE>";
+    private final String API_KEY = "ayZsvsj6j4ITxUbElQj2CS-fAlBdGckv3UEQ54ZgqpX6";
 
-    Button btnFetchResults;
+    Button btnFetchResults,btnPickImage;
     EditText etUrl;
     ProgressBar progressBar;
     View content;
     Single<ClassifiedImages> observable;
     private float threshold = (float) 0.6;
+    private Uri imageUri;
+    File file;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +63,13 @@ public class HomeActivity extends AppCompatActivity {
                     .apiKey(API_KEY)
                     .build();
 
+           InputStream inputStream = new FileInputStream(getRealPathFromURI(this,imageUri));
+
             VisualRecognition visualRecognition = new VisualRecognition("2018-03-19", options);
+            
             ClassifyOptions classifyOptions = new ClassifyOptions.Builder()
-                    .url(etUrl.getText().toString())
-                    .classifierIds(Collections.singletonList("explicit"))
+                    .imagesFile(new File(getRealPathFromURI(this,imageUri)))
+                    .classifierIds(Collections.singletonList("default"))
                     .threshold(threshold)
                     .owners(Collections.singletonList("me"))
                     .build();
@@ -64,19 +79,33 @@ public class HomeActivity extends AppCompatActivity {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = { MediaStore.Images.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
     private void goToNext(String url, List<ClassResult> resultList) {
         progressBar.setVisibility(View.GONE);
         content.setVisibility(View.VISIBLE);
 
         // Checking if image has a class named "explicit". If yes, then reject and show an error msg as a Toast
         for (ClassResult result : resultList) {
-            if(result.getClassName().equals("explicit")) {
-                Toast.makeText(this, "NOT ALLOWED TO UPLOAD EXPLICIT CONTENT", Toast.LENGTH_LONG).show();
-                return;
+            if(result.getClassName().equals("default")) {
+                Toast.makeText(this, "CONTENT IS FOOD", Toast.LENGTH_LONG).show();
             }
         }
 
-        Toast.makeText(this, "IMAGE DOESN'T CONTAIN ANY EXPLICIT CONTENT. OK TO PROCEED!", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "CONTENT IS NOT FOOD", Toast.LENGTH_LONG).show();
 
         // No Explicit content found, go ahead with processing results and moving to Results Activity
         ArrayList<VisualRecognitionResponseModel> classes = new ArrayList<>();
@@ -87,7 +116,7 @@ public class HomeActivity extends AppCompatActivity {
             classes.add(model);
         }
         Intent i = new Intent(HomeActivity.this, ResultsActivity.class);
-        i.putExtra("url", url);
+        i.putExtra("url", imageUri.toString());
         i.putParcelableArrayListExtra("classes", classes);
         startActivity(i);
     }
@@ -98,9 +127,18 @@ public class HomeActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.GONE);
         content = findViewById(R.id.ll_content);
+        btnPickImage = findViewById(R.id.btn_pick_image);
+
+        btnPickImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(i,1);
+            }
+        });
 
         btnFetchResults.setOnClickListener(v -> {
-            if (etUrl.getText().toString().endsWith(".png") || etUrl.getText().toString().endsWith(".jpg") || etUrl.getText().toString().endsWith(".jpeg")) {
+            if (imageUri!=null) {
                 content.setVisibility(View.GONE);
                 progressBar.setVisibility(View.VISIBLE);
                 observable.subscribe(new SingleObserver<ClassifiedImages>() {
@@ -126,5 +164,15 @@ public class HomeActivity extends AppCompatActivity {
                 Toast.makeText(HomeActivity.this, "Please make sure image URL is proper!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode ==1 && resultCode == RESULT_OK){
+            imageUri = data.getData();
+            file = new File(getRealPathFromURI(this,imageUri));
+
+        }
     }
 }
