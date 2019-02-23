@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -63,13 +64,11 @@ public class HomeActivity extends AppCompatActivity {
                     .apiKey(API_KEY)
                     .build();
 
-           InputStream inputStream = new FileInputStream(getRealPathFromURI(this,imageUri));
-
             VisualRecognition visualRecognition = new VisualRecognition("2018-03-19", options);
             
             ClassifyOptions classifyOptions = new ClassifyOptions.Builder()
                     .imagesFile(new File(getRealPathFromURI(this,imageUri)))
-                    .classifierIds(Collections.singletonList("default"))
+                    .classifierIds(Arrays.asList("Crops_511786024"))
                     .threshold(threshold)
                     .owners(Collections.singletonList("me"))
                     .build();
@@ -109,12 +108,18 @@ public class HomeActivity extends AppCompatActivity {
 
         // No Explicit content found, go ahead with processing results and moving to Results Activity
         ArrayList<VisualRecognitionResponseModel> classes = new ArrayList<>();
-        for (ClassResult result : resultList) {
+        /*for (ClassResult result : resultList) {
             VisualRecognitionResponseModel model = new VisualRecognitionResponseModel();
             model.setClassName(result.getClassName());
             model.setScore(result.getScore());
             classes.add(model);
-        }
+        }*/
+
+        VisualRecognitionResponseModel model = new VisualRecognitionResponseModel();
+        model.setClassName(resultList.get(0).getClassName());
+        model.setScore(resultList.get(0).getScore());
+        classes.add(model);
+
         Intent i = new Intent(HomeActivity.this, ResultsActivity.class);
         i.putExtra("url", imageUri.toString());
         i.putParcelableArrayListExtra("classes", classes);
