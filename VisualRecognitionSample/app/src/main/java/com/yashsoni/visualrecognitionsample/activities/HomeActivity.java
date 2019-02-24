@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -52,6 +53,7 @@ public class HomeActivity extends AppCompatActivity {
     private float threshold = (float) 0.6;
     private Uri imageUri;
     File file;
+    ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +70,7 @@ public class HomeActivity extends AppCompatActivity {
             
             ClassifyOptions classifyOptions = new ClassifyOptions.Builder()
                     .imagesFile(new File(getRealPathFromURI(this,imageUri)))
-                    .classifierIds(Arrays.asList("Crops_511786024"))
+                    .classifierIds(Arrays.asList("default"))
                     .threshold(threshold)
                     .owners(Collections.singletonList("me"))
                     .build();
@@ -108,17 +110,19 @@ public class HomeActivity extends AppCompatActivity {
 
         // No Explicit content found, go ahead with processing results and moving to Results Activity
         ArrayList<VisualRecognitionResponseModel> classes = new ArrayList<>();
-        /*for (ClassResult result : resultList) {
+        for (ClassResult result : resultList) {
             VisualRecognitionResponseModel model = new VisualRecognitionResponseModel();
             model.setClassName(result.getClassName());
             model.setScore(result.getScore());
             classes.add(model);
-        }*/
-
-        VisualRecognitionResponseModel model = new VisualRecognitionResponseModel();
+        }
+        /**
+         * Uncomment following code for getting only 1 class as result
+         * **/
+       /* VisualRecognitionResponseModel model = new VisualRecognitionResponseModel();
         model.setClassName(resultList.get(0).getClassName());
         model.setScore(resultList.get(0).getScore());
-        classes.add(model);
+        classes.add(model);*/
 
         Intent i = new Intent(HomeActivity.this, ResultsActivity.class);
         i.putExtra("url", imageUri.toString());
@@ -127,12 +131,13 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
-        etUrl = findViewById(R.id.et_url);
+
         btnFetchResults = findViewById(R.id.btn_fetch_results);
         progressBar = findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.GONE);
         content = findViewById(R.id.ll_content);
         btnPickImage = findViewById(R.id.btn_pick_image);
+        imageView = findViewById(R.id.imageView);
 
         btnPickImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -177,7 +182,7 @@ public class HomeActivity extends AppCompatActivity {
         if(requestCode ==1 && resultCode == RESULT_OK){
             imageUri = data.getData();
             file = new File(getRealPathFromURI(this,imageUri));
-
+            imageView.setImageURI(imageUri);
         }
     }
 }
