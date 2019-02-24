@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,24 +11,23 @@
     <LinearLayout
         android:id="@+id/ll_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
+        <ImageView
+            android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="5dp"
-            android:maxLines="2"
-            android:text="URL (must end with jpeg/jpg/png):"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            tools:srcCompat="@tools:sample/avatars[13]" />
 
-        <EditText
-            android:id="@+id/et_url"
+        <Button
+            android:id="@+id/btn_pick_image"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter image url here..."
-            android:lines="4" />
+            android:layout_marginTop="20dp"
+            android:background="@color/colorPrimaryDark"
+            android:text="Pick image"
+            android:textColor="@android:color/white" />
 
         <Button
             android:id="@+id/btn_fetch_results"
@@ -37,6 +37,7 @@
             android:background="@color/colorPrimaryDark"
             android:text="Fetch Results"
             android:textColor="@android:color/white" />
+
     </LinearLayout>
 
     <ProgressBar
